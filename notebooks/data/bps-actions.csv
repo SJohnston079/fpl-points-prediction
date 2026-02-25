@@ -1,0 +1,39 @@
+Category,Action,BPS
+Playing Time,Playing 1 to 60 minutes,3
+Playing Time,Playing over 60 minutes,6
+Goals,Scoring a goal direct from a penalty,12
+Goals,Goalkeepers and defenders scoring a goal,12
+Goals,Midfielders scoring a goal,18
+Goals,Forwards scoring a goal,24
+Attacking,Assists,9
+Defending,Goalkeepers and defenders keeping a clean sheet,12
+Goalkeeping,Saving a penalty,8
+Goalkeeping,Save from a shot inside the box,3
+Goalkeeping,Save from a shot outside the box,2
+Attacking,Successful open play cross,1
+Attacking,Creating a big chance,3
+Defending,Every 2 clearances/blocked shots/interceptions,1
+General,Every 3 recoveries,1
+Attacking,Key pass,1
+Defending,Successful tackle,2
+Attacking,Successful dribble,1
+Match Impact,Scoring the goal that wins a match,3
+Defending,Goal line clearance,9
+General,Foul won,1
+Attacking,Shot on target,2
+Passing,70 to 79% pass completion (min 30 passes),2
+Passing,80 to 89% pass completion (min 30 passes),4
+Passing,90%+ pass completion (min 30 passes),6
+Defending,Goalkeepers and defenders conceding a goal,-4
+Discipline,Conceding a penalty,-3
+Attacking,Missing a penalty,-6
+Discipline,Yellow card,-3
+Discipline,Red card,-9
+Errors,Own goal,-6
+Attacking,Missing a big chance,-3
+Errors,Error leading to a goal,-3
+Errors,Error leading to an attempt at goal,-1
+General,Being tackled,-1
+Discipline,Conceding a foul,-1
+General,Being caught offside,-1
+Attacking,Shot off target,-1
