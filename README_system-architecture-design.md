@@ -17,12 +17,12 @@ fpl-forecaster/
 │   ├── scoring\_rules.yaml    \# Points per goal, assist, recovery, etc.  
 │   └── pipeline\_state.json   \# Tracks the hash of scoring\_rules.yaml  
 ├── data/  
-│   ├── 01\_raw/               \# Immutable snapshots (JSON/CSV)  
-│   ├── 02\_ingested/          \# Standardized Parquet (Raw atoms: tackles, passes)  
-│   ├── 03\_labels/            \# Synthesized points based on scoring\_rules.yaml  
-│   ├── 04\_features/          \# Calculated metrics (Lags, rolling averages, ELO)  
-│   ├── 05\_feature\_store/     \# Final Join: Features \+ Synthetic Labels  
-│   └── 06\_evaluation/        \# \[Placeholder\] Model performance logs  
+│   ├── 00\_raw/               \# Immutable snapshots (JSON/CSV)  
+│   ├── 01\_ingested/          \# Standardized Parquet (Raw atoms: tackles, passes)  
+│   ├── 02\_labels/            \# Synthesized points based on scoring\_rules.yaml  
+│   ├── 03\_features/          \# Calculated metrics (Lags, rolling averages, ELO)  
+│   ├── 04\_feature\_store/     \# Final Join: Features \+ Synthetic Labels  
+│   └── 05s\_evaluation/        \# \[Placeholder\] Model performance logs  
 ├── src/  
 │   ├── synthesis/            \# Logic for Core Points and BPS Ranking  
 │   ├── engineering/          \# Logic for calculating rolling features/lags  
