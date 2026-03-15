@@ -12,22 +12,64 @@ This system is a **Rules-Agnostic Data Lakehouse**. It treats FPL points as a "S
 
 ## **2\. Directory Structure**
 
-fpl-forecaster/  
-├── configs/  
-│   ├── scoring\_rules.yaml    \# Points per goal, assist, recovery, etc.  
-│   └── pipeline\_state.json   \# Tracks the hash of scoring\_rules.yaml  
-├── data/  
-│   ├── 00\_raw/               \# Immutable snapshots (JSON/CSV)  
-│   ├── 01\_ingested/          \# Standardized Parquet (Raw atoms: tackles, passes)  
-│   ├── 02\_labels/            \# Synthesized points based on scoring\_rules.yaml  
-│   ├── 03\_features/          \# Calculated metrics (Lags, rolling averages, ELO)  
-│   ├── 04\_feature\_store/     \# Final Join: Features \+ Synthetic Labels  
-│   └── 05s\_evaluation/        \# \[Placeholder\] Model performance logs  
-├── src/  
-│   ├── synthesis/            \# Logic for Core Points and BPS Ranking  
-│   ├── engineering/          \# Logic for calculating rolling features/lags  
-│   └── store/                \# Logic for incremental vs full-refresh updates  
-└── ...
+fpl-forecaster/
+│
+├── config/
+│   ├── shared/
+│   │   └── seasons.yaml              # season metadata, GW ranges, status
+│   ├── ingestion/
+│   │   ├── fpl_core/
+│   │   │   └── manifest.yaml         # file paths + update types per season
+│   │   ├── prices/
+│   │   │   └── manifest.yaml         # price file config
+│   │   └── external/
+│   │       └── sources.yaml          # odds/scraped sources
+│   └── pipeline/
+│       └── scoring_rules.yaml        # points per goal, assist etc.
+│
+├── state/
+│   ├── shared/
+│   │   └── ingestion_state.yaml      # current GW, GW statuses
+│   └── ingestion/
+│       ├── fpl_core/
+│       │   └── sha_current.yaml      # latest SHA per file
+│       ├── prices/
+│       │   └── prices_state.yaml     # last fetched timestamps
+│       ├── external/
+│       │   └── odds_state.yaml       # last scraped timestamps
+│       └── pipeline_state.json       # tracks config hashes, triggers recomputation
+│
+├── data/
+│   ├── 00_raw/                       # immutable snapshots — output of data gathering
+│   │   ├── fpl_core/                 # mirroring GitHub structure
+│   │   ├── prices/
+│   │   └── external/
+│   ├── 01_ingested/                  # standardised parquet — raw atoms
+│   ├── 02_labels/                    # synthetic points from scoring_rules.yaml
+│   ├── 03_features/                  # rolling averages, lags, ELO
+│   ├── 04_feature_store/             # final join: features + labels
+│   └── 05_evaluation/                # model performance logs
+│
+├── audit/
+│   └── training_runs.jsonl           # SHA snapshot per training run
+│
+├── logs/
+│   └── app.log                       # single append-only runtime log
+│
+└── src/
+    ├── gathering/                    # everything we've been designing
+    │   ├── fetcher/                  # GitHub interaction, SHA tracking
+    │   ├── scraper/                  # external odds/prices
+    │   └── resolver.py              # manifest → actual file paths
+    ├── ingestion/                    # 00_raw → 01_ingested
+    │   └── ...
+    ├── synthesis/                    # 01_ingested → 02_labels (points recomputation)
+    │   └── ...
+    ├── engineering/                  # 02_labels → 03_features
+    │   └── ...
+    └── store/                        # incremental vs full refresh logic
+        └── ...
+
 
 ## **3\. The Rules Synthesis Logic**
 
