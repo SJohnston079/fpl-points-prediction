@@ -44,6 +44,9 @@ fpl-forecaster/
 │   │   ├── fpl_core/                 # mirroring GitHub structure
 │   │   ├── prices/
 │   │   └── external/
+|   ├── 00_assembled/
+│   |   ├── squad_history/
+|   |   └── price_history/
 │   ├── 01_ingested/                  # standardised parquet — raw atoms
 │   ├── 02_labels/                    # synthetic points from scoring_rules.yaml
 │   ├── 03_features/                  # rolling averages, lags, ELO
