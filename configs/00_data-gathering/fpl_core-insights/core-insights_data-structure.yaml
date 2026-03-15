@@ -1,0 +1,24 @@
+2024-2025:
+  season_files:
+    players: "players/players.csv"
+    teams: "teams/teams.csv"
+    playerstats: "playerstats/playerstats.csv"
+  gw_files:
+    matches: "matches/GW{n}/matches.csv"
+    playermatchstats: "playermatchstats/GW{n}/playermatchstats.csv"
+
+2025-2026:
+  season_files:
+    gameweek_summaries: "gameweek_summaries.csv"
+    players: "players.csv"
+    playerstats: "playerstats.csv"
+    teams: "teams.csv"
+  gw_files:
+    # Note: season-level files are final state only — backfill via squad_history.py for GW-level history
+    players: "By Gameweek/GW{n}/players.csv"
+    teams: "By Gameweek/GW{n}/teams.csv"
+    playerstats: "By Gameweek/GW{n}/playerstats.csv"
+    matches: "By Gameweek/GW{n}/matches.csv"
+    playermatchstats: "By Gameweek/GW{n}/playermatchstats.csv"
+  excluded:
+    by_tournament: "redundant — revisit if non-PL competition needed"

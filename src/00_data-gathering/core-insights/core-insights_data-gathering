@@ -1,0 +1,14 @@
+from github import Github
+
+
+g = Github() # maybe add personal access token to avoid rate limits: Github("personal_access_token")
+repo = g.get_repo('olbauday/FPL-Core-Insights')
+
+#print(repo.get_contents("")) # returns ContentFile objects for each file/ directory in the base repository  
+#print(repo.get_contents("data")) # returns ContentFile objects for each file/ directory in the data-gathering directory
+
+
+# g.get_rates_limit() # returns the rate limit for the current user
+
+
+# 1: Discover what I have currently in the data-gathering directory (Or look at logs???)
