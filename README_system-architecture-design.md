@@ -16,62 +16,74 @@ fpl-forecaster/
 │
 ├── config/
 │   ├── shared/
-│   │   └── seasons.yaml              # season metadata, GW ranges, status
+│   │   └── seasons.yaml                    # season metadata, GW ranges, status
 │   ├── ingestion/
 │   │   ├── fpl_core/
-│   │   │   └── manifest.yaml         # file paths + update types per season
+│   │   │   └── manifest.yaml               # file paths per season
 │   │   ├── prices/
-│   │   │   └── manifest.yaml         # price file config
+│   │   │   └── manifest.yaml               # price file config
 │   │   └── external/
-│   │       └── sources.yaml          # odds/scraped sources
+│   │       └── sources.yaml                # odds/scraped sources
+│   ├── assembled/
+│   │   ├── squad_history.yaml              # source, method, script reference
+│   │   └── price_history.yaml              # source, method, script reference
 │   └── pipeline/
-│       └── scoring_rules.yaml        # points per goal, assist etc.
+│       └── scoring_rules.yaml              # points per goal, assist etc.
 │
 ├── state/
 │   ├── shared/
-│   │   └── ingestion_state.yaml      # current GW, GW statuses
-│   └── ingestion/
-│       ├── fpl_core/
-│       │   └── sha_current.yaml      # latest SHA per file
-│       ├── prices/
-│       │   └── prices_state.yaml     # last fetched timestamps
-│       ├── external/
-│       │   └── odds_state.yaml       # last scraped timestamps
-│       └── pipeline_state.json       # tracks config hashes, triggers recomputation
+│   │   └── ingestion_state.yaml            # current GW, GW statuses
+│   ├── ingestion/
+│   │   ├── fpl_core/
+│   │   │   └── sha_current.yaml            # latest SHA per file
+│   │   ├── prices/
+│   │   │   └── prices_state.yaml           # last fetched timestamps
+│   │   └── external/
+│   │       └── odds_state.yaml             # last scraped timestamps
+│   ├── assembled/
+│   │   ├── squad_history_state.yaml        # last built, source SHAs used
+│   │   └── price_history_state.yaml        # last built, snapshots used
+│   └── pipeline_state.json                 # tracks config hashes, triggers recomputation
 │
 ├── data/
-│   ├── 00_raw/                       # immutable snapshots — output of data gathering
-│   │   ├── fpl_core/                 # mirroring GitHub structure
+│   ├── 00_raw/                             # immutable, direct mirror of sources
+│   │   ├── fpl_core/
 │   │   ├── prices/
 │   │   └── external/
-|   ├── 00_assembled/
-│   |   ├── squad_history/
-|   |   └── price_history/
-│   ├── 01_ingested/                  # standardised parquet — raw atoms
-│   ├── 02_labels/                    # synthetic points from scoring_rules.yaml
-│   ├── 03_features/                  # rolling averages, lags, ELO
-│   ├── 04_feature_store/             # final join: features + labels
-│   └── 05_evaluation/                # model performance logs
+│   ├── 00_assembled/                       # built from raw, no processing yet
+│   │   ├── squad_history/
+│   │   └── price_history/
+│   ├── 01_ingested/                        # standardised parquet — raw atoms
+│   ├── 02_labels/                          # synthetic points from scoring_rules.yaml
+│   ├── 03_features/                        # rolling averages, lags, ELO
+│   ├── 04_feature_store/                   # final join: features + labels
+│   └── 05_evaluation/                      # model performance logs
 │
 ├── audit/
-│   └── training_runs.jsonl           # SHA snapshot per training run
+│   └── training_runs.jsonl                 # SHA snapshot per training run
 │
 ├── logs/
-│   └── app.log                       # single append-only runtime log
+│   └── app.log                             # single append-only runtime log
 │
 └── src/
-    ├── gathering/                    # everything we've been designing
-    │   ├── fetcher/                  # GitHub interaction, SHA tracking
-    │   ├── scraper/                  # external odds/prices
-    │   └── resolver.py              # manifest → actual file paths
-    ├── ingestion/                    # 00_raw → 01_ingested
-    │   └── ...
-    ├── synthesis/                    # 01_ingested → 02_labels (points recomputation)
-    │   └── ...
-    ├── engineering/                  # 02_labels → 03_features
-    │   └── ...
-    └── store/                        # incremental vs full refresh logic
-        └── ...
+    ├── utils/                              # shared utilities, imported everywhere
+    │   ├── github_client.py                # PyGitHub wrapper, SHA tracking
+    │   ├── yaml_loader.py                  # config/state read-write helpers
+    │   ├── logger.py                       # logging setup, imported by all modules
+    │   └── state_manager.py               # shared state read-write logic
+    ├── 00_gathering/                       # fetches into 00_raw
+    │   ├── fetcher/                        # GitHub file fetching
+    │   ├── scraper/                        # external odds/prices
+    │   ├── backfill/                       # one-time historical recovery scripts
+    │   └── resolver.py                     # manifest → actual file paths
+    ├── 00_assembler/                       # builds 00_assembled from 00_raw
+    │   ├── squad_history.py               # GW-by-GW squad state from git commits
+    │   └── price_history.py               # price snapshots over time
+    ├── 01_ingestion/                       # 00_raw + 00_assembled → 01_ingested
+    ├── 02_synthesis/                       # 01_ingested → 02_labels
+    ├── 03_engineering/                     # 02_labels → 03_features
+    ├── 04_store/                           # 03_features → 04_feature_store
+    └── 05_evaluation/                      # 04_feature_store → 05_evaluation
 
 
 ## **3\. The Rules Synthesis Logic**
