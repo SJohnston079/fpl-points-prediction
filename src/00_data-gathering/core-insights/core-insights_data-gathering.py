@@ -11,4 +11,4 @@ repo = g.get_repo('olbauday/FPL-Core-Insights')
 # g.get_rates_limit() # returns the rate limit for the current user
 
 
-# 1: Discover what I have currently in the data-gathering directory (Or look at logs???)
+# 1: Discover what I have currently in the data-gathering directory (Or look at logs???) 
