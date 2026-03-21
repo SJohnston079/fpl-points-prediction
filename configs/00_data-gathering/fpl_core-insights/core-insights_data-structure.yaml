@@ -1,3 +1,5 @@
+# Note: season-level files are final state only — backfill via squad_history.py for GW-level history
+
 2024-2025:
   season_files:
     players: "players/players.csv"
@@ -14,7 +16,6 @@
     playerstats: "playerstats.csv"
     teams: "teams.csv"
   gw_files:
-    # Note: season-level files are final state only — backfill via squad_history.py for GW-level history
     players: "By Gameweek/GW{n}/players.csv"
     teams: "By Gameweek/GW{n}/teams.csv"
     playerstats: "By Gameweek/GW{n}/playerstats.csv"
