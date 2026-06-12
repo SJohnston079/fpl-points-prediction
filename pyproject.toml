@@ -8,5 +8,6 @@ dependencies = [
     "jupyter>=1.1.1",
     "logging>=0.4.9.6",
     "pandas>=3.0.1",
+    "pydantic>=2.13.4",
     "pygithub>=2.8.1",
 ]
