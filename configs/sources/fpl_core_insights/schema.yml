@@ -3,8 +3,8 @@
 2024-2025:
   season_files:
     players: "players/players.csv"
-    teams: "teams/teams.csv"
     playerstats: "playerstats/playerstats.csv"
+    teams: "teams/teams.csv"
   gw_files:
     matches: "matches/GW{n}/matches.csv"
     playermatchstats: "playermatchstats/GW{n}/playermatchstats.csv"

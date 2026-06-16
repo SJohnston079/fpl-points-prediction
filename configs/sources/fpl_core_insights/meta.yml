@@ -1,0 +1,10 @@
+name: fpl_core_insights
+description: "FPL Core Insights combines official FPL data, detailed match statistics, and Club Elo ratings into a unified dataset for advanced Fantasy Premier League analysis and prediction."
+
+source:
+  type: 'github'
+  owner: 'olbauday'
+  repo: 'FPL-Core-Insights'
+  branch: 'main'
+
+output_dir_name: 'fpl-core-insights'
