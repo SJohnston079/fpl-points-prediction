@@ -145,7 +145,7 @@ def get_github_zip(url: str) -> zipfile.ZipFile:
     return zip_file
 
 
-def ingest_github_directory(config: DataSourceMetaDataConfig):
+def gather_github_directory(config: DataSourceMetaDataConfig):
     """Ingest a directory from a GitHub repository based on the provided configuration.
 
     :param config: The configuration for the data source.
@@ -195,7 +195,7 @@ if __name__ == "__main__":
         )
 
         if config.source.type == 'github':
-            ingest_github_directory(config)
+            gather_github_directory(config)
         
         
 

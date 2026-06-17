@@ -7,4 +7,4 @@ source:
   repo: 'FPL-Core-Insights'
   branch: 'main'
 
-output_dir_name: 'fpl-core-insights'
+output_dir: 'fpl-core-insights'
