@@ -2,7 +2,7 @@ from pathlib import Path, PurePosixPath
 from ruamel.yaml.main import YAML
 from pydantic import BaseModel
 import zipfile
-from typing import Union
+from typing import Optional, Union
 import sys
 
 src_root = Path(__file__).resolve().parent.parent
@@ -81,17 +81,19 @@ class BaseOutputManager:
 
 
 class ZipfileOutputManager(BaseOutputManager):
-    def __init__(self, zip_file: zipfile.ZipFile, output_path: Path, archive_prefix: Path, source_config: DataSourceMetaDataConfig):
+    def __init__(self, zip_file: zipfile.ZipFile, output_path: Path, archive_prefix: Path, source_config: DataSourceMetaDataConfig, source_metadata: Optional[dict] = None):
         super().__init__(output_path)
 
         self.zip_file = zip_file
         self.archive_prefix = archive_prefix
         self.source_config = source_config
+        self.source_metadata = source_metadata
 
     def build_metadata(self):
 
         metadata = {
             "source_config": self.source_config.model_dump(),
+            "source_metadata":self.source_metadata
         }
 
 

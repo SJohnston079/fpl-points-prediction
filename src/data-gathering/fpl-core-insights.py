@@ -72,19 +72,21 @@ def get_github_sha(
     """
     url = f"https://api.github.com/repos/{owner}/{repo}/commits"
     headers = {"Accept": "application/vnd.github+json"}
-    
+    params = {}
 
     if sha:
         url += f"/{sha}"
     else:
-        params = {"per_page": 1}
+        params["per_page"] = 1
         if commit_datetime:
             params['until'] = commit_datetime.isoformat()
 
+    request_time = datetime.now(tz=UTC)
     response = requests.get(url, headers=headers, params=params, timeout=10)
 
     _check_response_status(response)
 
+    # rate limit monitoring
     if 'x-ratelimit-limit' not in response.headers:
         log.debug("No rate limit headers present, skipping rate limit log")
     else:
@@ -103,16 +105,13 @@ def get_github_sha(
             f"Resets at {rate_limit_reset_time.strftime('%Y-%m-%d %H:%M:%S %Z')}."
         )
         log.info(message)
-        print(message)
 
     result = response.json() if sha else response.json()[0]
 
     return {
         'sha': result.get('sha'),
-        'datetime': {
-            'value': datetime.fromisoformat(result['commit']['author'].get('date')),
-            'timezone': 'UTC',
-        },
+        'commit_datetime': datetime.fromisoformat(result['commit']['author'].get('date')).replace(tzinfo=UTC),
+        'request_datetime': request_time,
         'author': result['commit']['author'].get('name'),
         'message': result['commit'].get('message'),
     }
@@ -152,16 +151,15 @@ def ingest_github_directory(config: DataSourceMetaDataConfig):
     :param config: The configuration for the data source.
     :type config: DataSourceMetaDataConfig
     """
-    sha = '1bfb53778a307e4b133085c01838cf01fc7a907b'
     commit_info = get_github_sha(
         owner = config.source.owner, 
         repo = config.source.repo,
-        sha = sha
+        #sha = '1bfb53778a307e4b133085c01838cf01fc7a907b'
+        commit_datetime = datetime(2026, 6, 18, 22, 41, 54, tzinfo=UTC)
     )
-    log.info(f"Ingesting GitHub directory for {config.name} at sha {commit_info.get('sha')}")
+    log.info(f"Commit information:\n{commit_info}")
 
-    '''
-    url = get_github_url(config.source.owner, config.source.repo, sha)
+    url = get_github_url(config.source.owner, config.source.repo, commit_info.get('sha'))
     log.info(f"Extracting directory from url: '{url}'")
 
     github_zip = get_github_zip(url)
@@ -172,12 +170,12 @@ def ingest_github_directory(config: DataSourceMetaDataConfig):
     ZipfileOutputManager(
         zip_file=github_zip, 
         output_path=output_dir_path, 
-        archive_prefix=PurePosixPath(f"{config.source.repo}-{sha}"), 
-        source_config=config
+        archive_prefix=PurePosixPath(f"{config.source.repo}-{commit_info.get('sha')}"), 
+        source_config=config,
+        source_metadata=commit_info
     ).execute()
 
     log.info(f"Unzipped repository and saved to {output_dir_path}")
-    '''
 
 
 if __name__ == "__main__":
@@ -193,7 +191,7 @@ if __name__ == "__main__":
 
         config = read_config(
             config_path=metadata_config_path,
-            config_class=DataSourceMetaDataConfig
+            config_class=DataSourceMetaDataConfig,
         )
 
         if config.source.type == 'github':
