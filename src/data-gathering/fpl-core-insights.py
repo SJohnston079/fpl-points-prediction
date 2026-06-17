@@ -1,4 +1,3 @@
-import os
 from pathlib import Path, PurePosixPath
 from helper import download_from_github
 import logging
@@ -7,11 +6,14 @@ import io
 import zipfile
 import requests
 from typing import Optional, Union
+from datetime import datetime, UTC
+from zoneinfo import ZoneInfo
+import json
 
 src_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(src_root))
-from utils.config.functions import read_config
-from utils.config.types import DataSourceMetaDataConfig
+from utils.config.functions import read_config, ZipfileOutputManager
+from utils.config.config_schemas import DataSourceMetaDataConfig
 from utils.constants import (
     SOURCES_CONFIG_DIR,
     SOURCE_METADATA_CONFIG_NAME,
@@ -21,24 +23,99 @@ from utils.constants import (
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-def get_github_sha():
-    return '1bfb53778a307e4b133085c01838cf01fc7a907b'
+def _check_response_status(response: requests.Response) -> None:
+    """Validate an HTTP response, raising descriptive errors for non-2xx status codes.
 
-
-def get_relative_path(zip_entry_path: str, archive_prefix: Path) -> Union[Path, bool]:
-    """Returns the file path within the ZIP archive, relative to the specified prefix.
-
-    :param zip_entry_path: An absolute file path.
-    :type zip_entry_path: str
-    :param archive_prefix: The path prefix from which relative file paths are calculated.
-    :type archive_prefix: Path
-    :return: 
-    :rtype: Union[Path, bool]
+    :param response: Response object from an HTTP request
+    :type response: requests.Response
+    :raises ValueError: For 4xx client errors
+    :raises RuntimeError: For 429 rate limit or 5xx server errors
     """
-    path = PurePosixPath (zip_entry_path)
-    if path.is_relative_to(archive_prefix) and not zip_entry_path.endswith("/"):
-        return path.relative_to(archive_prefix)
-    return False
+    status_code = int(response.status_code)
+
+    if status_code == 200:
+        log.info("Successful API request")
+    elif status_code == 400:
+        raise ValueError(f"Bad Request: {response.json().get('message')}, for url {response.url}")
+    elif status_code == 404:
+        message = response.json().get('message') if response.content else 'No message'
+        raise ValueError(f"Not Found: {message}, for url {response.url}")
+    elif status_code == 429:
+        raise RuntimeError("Rate Limited")
+    elif 400 <= status_code < 500:
+        raise ValueError(f"Client Error: {status_code}, for url {response.url}")
+    elif status_code >= 500:
+        raise RuntimeError(f"Server Error: {status_code}, for url {response.url}")
+    else:
+        response.raise_for_status()
+
+
+def get_github_sha(
+    owner: str,
+    repo: str,
+    sha: Optional[str] = None,
+    commit_datetime: Optional[datetime] = None,
+) -> dict:
+    """Function to get the sha identifier for a github repository,
+    either for the most recent commit, or for a specific datetime.
+
+    :param owner: The github repository owner
+    :type owner: str
+    :param repo: The repository to extract from
+    :type repo: str
+    :param sha: Commit SHA (secure hash algorithm) identifier to use directly. Defaults to None.
+    :type sha: Optional[str], optional
+    :param commit_datetime: Return the most recent commit SHA before this datetime. Ignored if sha is provided. Defaults to None.
+    :type commit_datetime: Optional[datetime], optional
+    :return: The sha (secure hash algorithm) identifier for the commit we are interested in
+    :rtype: dict
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}/commits"
+    headers = {"Accept": "application/vnd.github+json"}
+    
+
+    if sha:
+        url += f"/{sha}"
+    else:
+        params = {"per_page": 1}
+        if commit_datetime:
+            params['until'] = commit_datetime.isoformat()
+
+    response = requests.get(url, headers=headers, params=params, timeout=10)
+
+    _check_response_status(response)
+
+    if 'x-ratelimit-limit' not in response.headers:
+        log.debug("No rate limit headers present, skipping rate limit log")
+    else:
+        max_requests = response.headers.get('x-ratelimit-limit')
+        remaining_requests = response.headers.get('x-ratelimit-remaining')
+        total_used_requests = response.headers.get('x-ratelimit-used')
+        rate_limit_reset_time = datetime.fromtimestamp(
+            int(response.headers.get('x-ratelimit-reset')), tz=UTC
+        ).astimezone(ZoneInfo("Pacific/Auckland"))
+        rate_limit_resource = response.headers.get('x-ratelimit-resource')
+
+        message = (
+            f"GitHub rate limit ({rate_limit_resource}): "
+            f"{remaining_requests}/{max_requests} requests remaining "
+            f"({total_used_requests} used). "
+            f"Resets at {rate_limit_reset_time.strftime('%Y-%m-%d %H:%M:%S %Z')}."
+        )
+        log.info(message)
+        print(message)
+
+    result = response.json() if sha else response.json()[0]
+
+    return {
+        'sha': result.get('sha'),
+        'datetime': {
+            'value': datetime.fromisoformat(result['commit']['author'].get('date')),
+            'timezone': 'UTC',
+        },
+        'author': result['commit']['author'].get('name'),
+        'message': result['commit'].get('message'),
+    }
 
 
 def get_github_url(owner: str, repo: str, sha: str) -> str:
@@ -75,21 +152,33 @@ def ingest_github_directory(config: DataSourceMetaDataConfig):
     :param config: The configuration for the data source.
     :type config: DataSourceMetaDataConfig
     """
+    sha = '1bfb53778a307e4b133085c01838cf01fc7a907b'
+    commit_info = get_github_sha(
+        owner = config.source.owner, 
+        repo = config.source.repo,
+        sha = sha
+    )
+    log.info(f"Ingesting GitHub directory for {config.name} at sha {commit_info.get('sha')}")
 
-    sha = get_github_sha()
-    log.info(f"Ingesting GitHub directory for {config.name} at sha {sha}")
-
+    '''
     url = get_github_url(config.source.owner, config.source.repo, sha)
-    log.info(f"Extracting directory from url: {url}")
+    log.info(f"Extracting directory from url: '{url}'")
 
     github_zip = get_github_zip(url)
     log.info("Github repository zipfile extracted")
 
     output_dir_path = PurePosixPath(RAW_DATA_DIR_PATH) / config.output_dir_name
 
-    log.info(f"Unzipped repository and saved to {output_dir_path}")
+    ZipfileOutputManager(
+        zip_file=github_zip, 
+        output_path=output_dir_path, 
+        archive_prefix=PurePosixPath(f"{config.source.repo}-{sha}"), 
+        source_config=config
+    ).execute()
 
-    
+    log.info(f"Unzipped repository and saved to {output_dir_path}")
+    '''
+
 
 if __name__ == "__main__":
     

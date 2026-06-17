@@ -3,7 +3,11 @@ from ruamel.yaml.main import YAML
 from pydantic import BaseModel
 import zipfile
 from typing import Union
-from types import DataSourceMetaDataConfig
+import sys
+
+src_root = Path(__file__).resolve().parent.parent
+sys.path.append(str(src_root))
+from utils.config.config_schemas import DataSourceMetaDataConfig
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -82,10 +86,19 @@ class ZipfileOutputManager(BaseOutputManager):
 
         self.zip_file = zip_file
         self.archive_prefix = archive_prefix
+        self.source_config = source_config
 
     def build_metadata(self):
 
-        print()
+        metadata = {
+            "source_config": self.source_config.model_dump(),
+        }
+
+
+        return metadata
+
+    def write_metadata(self):
+        return super().write_metadata()
 
     def write_data(self):
         """Function to unzip the directory, and output to the specified output Path
@@ -108,3 +121,8 @@ class ZipfileOutputManager(BaseOutputManager):
                 target.write(source.read())
 
 
+    def execute(self):
+
+        meta = self.build_metadata()
+
+        print(meta)
