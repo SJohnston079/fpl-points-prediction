@@ -7,8 +7,8 @@ import zipfile
 import requests
 from typing import Optional, Union
 from datetime import datetime, UTC
+from dateutil import parser as dtparser
 from zoneinfo import ZoneInfo
-import json
 
 src_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(src_root))
@@ -50,7 +50,16 @@ def _check_response_status(response: requests.Response) -> None:
         response.raise_for_status()
 
 
-def get_github_sha(
+def _parse_to_utc(date_str: str) -> datetime:
+    dt = dtparser.parse(date_str)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    else:
+        dt = dt.astimezone(UTC) 
+    return dt
+
+
+def get_commit_info(
     owner: str,
     repo: str,
     sha: Optional[str] = None,
@@ -58,6 +67,7 @@ def get_github_sha(
 ) -> dict:
     """Function to get the sha identifier for a github repository,
     either for the most recent commit, or for a specific datetime.
+    Also gathers commit metadata
 
     :param owner: The github repository owner
     :type owner: str
@@ -93,16 +103,14 @@ def get_github_sha(
         max_requests = response.headers.get('x-ratelimit-limit')
         remaining_requests = response.headers.get('x-ratelimit-remaining')
         total_used_requests = response.headers.get('x-ratelimit-used')
-        rate_limit_reset_time = datetime.fromtimestamp(
-            int(response.headers.get('x-ratelimit-reset')), tz=UTC
-        ).astimezone(ZoneInfo("Pacific/Auckland"))
+        rate_limit_reset_time = _parse_to_utc(date_str=response.headers.get('x-ratelimit-reset')).astimezone(ZoneInfo("Pacific/Auckland"))
         rate_limit_resource = response.headers.get('x-ratelimit-resource')
 
         message = (
             f"GitHub rate limit ({rate_limit_resource}): "
             f"{remaining_requests}/{max_requests} requests remaining "
             f"({total_used_requests} used). "
-            f"Resets at {rate_limit_reset_time.strftime('%Y-%m-%d %H:%M:%S %Z')}."
+            f"Resets at {rate_limit_reset_time.isoformat()}."
         )
         log.info(message)
 
@@ -110,8 +118,8 @@ def get_github_sha(
 
     return {
         'sha': result.get('sha'),
-        'commit_datetime': datetime.fromisoformat(result['commit']['author'].get('date')).replace(tzinfo=UTC),
-        'request_datetime': request_time,
+        'commit_datetime': _parse_to_utc(result['commit']['author'].get('date')).isoformat(),
+        'request_datetime': request_time.isoformat(),
         'author': result['commit']['author'].get('name'),
         'message': result['commit'].get('message'),
     }
@@ -151,7 +159,7 @@ def gather_github_directory(config: DataSourceMetaDataConfig):
     :param config: The configuration for the data source.
     :type config: DataSourceMetaDataConfig
     """
-    commit_info = get_github_sha(
+    commit_info = get_commit_info(
         owner = config.source.owner, 
         repo = config.source.repo,
         #sha = '1bfb53778a307e4b133085c01838cf01fc7a907b'
@@ -166,7 +174,7 @@ def gather_github_directory(config: DataSourceMetaDataConfig):
     log.info("Github repository zipfile extracted")
 
     output_dir_path = PurePosixPath(RAW_DATA_DIR_PATH) / config.output_dir_name
-
+    
     ZipfileOutputManager(
         zip_file=github_zip, 
         output_path=output_dir_path, 
@@ -174,7 +182,6 @@ def gather_github_directory(config: DataSourceMetaDataConfig):
         source_config=config,
         source_metadata=commit_info
     ).execute()
-
     log.info(f"Unzipped repository and saved to {output_dir_path}")
 
 
