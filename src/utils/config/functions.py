@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import zipfile
 from typing import Optional, Union
 import sys
+import pprint
 
 from ruamel.yaml import YAML
 yaml = YAML()
@@ -129,7 +130,11 @@ class ZipfileOutputManager(BaseOutputManager):
         if filename.endswith('.yaml'):
             filename = filename.replace('.yaml', '.yml')
         assert filename.endswith('.yml')
-        yaml.dump(metadata, self.output_path / filename)
+
+        filepath = self.output_path / filename
+        yaml.dump(metadata, filepath)
+
+        return filepath
 
     def write_data(self):
         """Function to unzip the directory, and output to the specified output Path
@@ -160,5 +165,8 @@ class ZipfileOutputManager(BaseOutputManager):
         """
 
         metadata = self.build_metadata()
-        self.write_yaml(metadata=metadata)
+        log.info(f'Step 1: Built Metadata: {pprint.PrettyPrinter(indent=2, sort_dicts=False, compact=True)}')
+        filepath = self.write_yaml(metadata=metadata)
+        log.info(f'Step 2: Wrote Metadata to {filepath}')
         self.write_data()
+        log.info(f'Wrote the ZipFile to {self.output_path}, subsetted by archive_prefix: {self.archive_prefix}')
