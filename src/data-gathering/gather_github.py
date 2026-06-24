@@ -163,7 +163,7 @@ def gather_github_directory(config: DataSourceMetaDataConfig):
         owner = config.source.owner, 
         repo = config.source.repo,
         #sha = '1bfb53778a307e4b133085c01838cf01fc7a907b'
-        commit_datetime = datetime(2026, 6, 18, 22, 41, 54, tzinfo=UTC)
+        #commit_datetime = datetime(2026, 6, 18, 22, 41, 54, tzinfo=UTC)
     )
     log.info(f"Commit information:\n{commit_info}")
 
