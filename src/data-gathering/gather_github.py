@@ -51,6 +51,14 @@ def _check_response_status(response: requests.Response) -> None:
 
 
 def _parse_to_utc(date_str: str) -> datetime:
+    """Parse a date string to utc datetime object
+
+    :param date_str: A date string in any format recognised by dateutil.parser.parse (e.g. Human readable formats)
+    :type date_str: str
+    :return: A datetime object in UTC
+    :rtype: datetime
+    """
+    print(date_str)
     dt = dtparser.parse(date_str)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=UTC)
@@ -103,7 +111,8 @@ def get_commit_info(
         max_requests = response.headers.get('x-ratelimit-limit')
         remaining_requests = response.headers.get('x-ratelimit-remaining')
         total_used_requests = response.headers.get('x-ratelimit-used')
-        rate_limit_reset_time = _parse_to_utc(date_str=response.headers.get('x-ratelimit-reset')).astimezone(ZoneInfo("Pacific/Auckland"))
+        print(response.headers.get('x-ratelimit-reset'))
+        rate_limit_reset_time = datetime.fromtimestamp(int(response.headers.get('x-ratelimit-reset')), tz=UTC).astimezone(ZoneInfo("Pacific/Auckland"))
         rate_limit_resource = response.headers.get('x-ratelimit-resource')
 
         message = (
