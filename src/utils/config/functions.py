@@ -60,7 +60,7 @@ def get_relative_path(zip_entry_path: str, archive_prefix: PurePosixPath) -> Opt
     :return: The relative path if the file is within the archive prefix, otherwise None.
     :rtype: Optional[PurePosixPath]
     """
-    path = PurePosixPath (zip_entry_path)
+    path = PurePosixPath(zip_entry_path)
     if path.is_relative_to(archive_prefix) and not zip_entry_path.endswith("/"):
         return path.relative_to(archive_prefix)
 
@@ -170,4 +170,4 @@ class ZipfileOutputManager(BaseOutputManager):
         filepath = self.write_yaml(metadata=metadata)
         log.info(f'Step 2: Wrote Metadata to {filepath}')
         self.write_data()
-        log.info(f'Wrote the ZipFile to {self.output_path}, subsetted by archive_prefix: {self.archive_prefix}')
+        log.info(f'Step 3: Wrote the ZipFile to {self.output_path}, subsetted by archive_prefix: {self.archive_prefix}')

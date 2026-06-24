@@ -182,7 +182,7 @@ def gather_github_directory(config: DataSourceMetaDataConfig):
     github_zip = get_github_zip(url)
     log.info("Github repository zipfile extracted")
 
-    output_dir_path = PurePosixPath(RAW_DATA_DIR_PATH) / config.output_dir_name
+    output_dir_path = Path(RAW_DATA_DIR_PATH) / config.output_dir_name
     
     ZipfileOutputManager(
         zip_file=github_zip, 
@@ -191,7 +191,7 @@ def gather_github_directory(config: DataSourceMetaDataConfig):
         source_config=config,
         source_metadata=commit_info
     ).execute()
-    log.info(f"Unzipped repository and saved to {output_dir_path}")
+    log.info(f"Unzipped repository")
 
 
 if __name__ == "__main__":
