@@ -132,7 +132,8 @@ class ZipfileOutputManager(BaseOutputManager):
         assert filename.endswith('.yml')
 
         filepath = self.output_path / filename
-        yaml.dump(metadata, filepath)
+        with open(filepath, 'w') as s:
+            yaml.dump(metadata, s)
 
         return filepath
 
