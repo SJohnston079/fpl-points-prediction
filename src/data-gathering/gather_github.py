@@ -1,5 +1,4 @@
 from pathlib import Path, PurePosixPath
-from helper import download_from_github
 import logging
 import sys
 import io
@@ -12,13 +11,9 @@ from zoneinfo import ZoneInfo
 
 src_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(src_root))
-from utils.config.functions import read_config, ZipfileOutputManager
+from utils.config.functions import ZipfileOutputManager
 from utils.config.config_schemas import DataSourceMetaDataConfig
-from utils.constants import (
-    SOURCES_CONFIG_DIR,
-    SOURCE_METADATA_CONFIG_NAME,
-    RAW_DATA_DIR_PATH
-)
+from utils.constants import RAW_DATA_DIR_PATH
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -162,17 +157,21 @@ def get_github_zip(url: str) -> zipfile.ZipFile:
     return zip_file
 
 
-def gather_github_directory(config: DataSourceMetaDataConfig):
+def gather_github_directory(config: DataSourceMetaDataConfig, sha: Optional[str] = None, commit_datetime: Optional[datetime] = None) -> None:
     """Ingest a directory from a GitHub repository based on the provided configuration.
 
     :param config: The configuration for the data source.
     :type config: DataSourceMetaDataConfig
+    :param sha: The SHA (secure hash algorithm) identifier for the commit, defaults to None
+    :type sha: Optional[str]
+    :param commit_datetime: The datetime of the commit, defaults to None
+    :type commit_datetime: Optional[datetime]
     """
     commit_info = get_commit_info(
         owner = config.source.owner, 
         repo = config.source.repo,
-        #sha = '1bfb53778a307e4b133085c01838cf01fc7a907b'
-        #commit_datetime = datetime(2026, 6, 18, 22, 41, 54, tzinfo=UTC)
+        sha = sha,
+        commit_datetime = commit_datetime
     )
     log.info(f"Commit information:\n{commit_info}")
 
@@ -194,31 +193,3 @@ def gather_github_directory(config: DataSourceMetaDataConfig):
     log.info(f"Unzipped repository")
 
 
-if __name__ == "__main__":
-    
-
-    sources_config_path = Path(SOURCES_CONFIG_DIR)
-
-    for dir in sources_config_path.iterdir():
-        if not dir.is_dir():
-            continue 
-
-        metadata_config_path = dir / SOURCE_METADATA_CONFIG_NAME
-
-        config = read_config(
-            config_path=metadata_config_path,
-            config_class=DataSourceMetaDataConfig,
-        )
-
-        if config.source.type == 'github':
-            gather_github_directory(config)
-        
-        
-
-
-
-
-
-
-
-    #ingest_fpl_core_insights()

@@ -1,7 +1,7 @@
 from pathlib import Path, PurePosixPath
 from pydantic import BaseModel
 import zipfile
-from typing import Optional, Union
+from typing import Optional, TypeVar, Type
 import sys
 import pprint
 
@@ -17,8 +17,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+T = TypeVar("T", bound=BaseModel)
 
-def read_config(config_path: Path, config_class: type[BaseModel]) -> BaseModel:
+
+def read_config(config_path: Path, config_class: Type[T]) -> T:
     """Load a YAML configuration file and validate it using a Pydantic model.
 
     The YAML file is parsed into a Python dictionary, which is then validated
