@@ -4,14 +4,14 @@ import sys
 import io
 import zipfile
 import requests
-from typing import Optional
+from typing import Optional, TypedDict
 from datetime import datetime, UTC
 from dateutil import parser as dtparser
 from zoneinfo import ZoneInfo
 
 src_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(src_root))
-from utils.config.functions import ZipfileOutputManager
+from utils.io.writers import ZipfileOutputManager
 from utils.config.config_schemas import DataSourceMetaDataConfig
 from utils.constants import RAW_DATA_DIR_PATH
 
@@ -62,12 +62,20 @@ def _parse_to_utc(date_str: str) -> datetime:
     return dt
 
 
+class CommitInfo(TypedDict):
+    sha: str
+    commit_datetime: str
+    request_datetime: str
+    author: str
+    message: str
+
+
 def get_commit_info(
     owner: str,
     repo: str,
     sha: Optional[str] = None,
     commit_datetime: Optional[datetime] = None,
-) -> dict:
+) -> CommitInfo:
     """Function to get the sha identifier for a github repository,
     either for the most recent commit, or for a specific datetime.
     Also gathers commit metadata
@@ -103,30 +111,38 @@ def get_commit_info(
     if 'x-ratelimit-limit' not in response.headers:
         log.debug("No rate limit headers present, skipping rate limit log")
     else:
-        max_requests = response.headers.get('x-ratelimit-limit')
-        remaining_requests = response.headers.get('x-ratelimit-remaining')
-        total_used_requests = response.headers.get('x-ratelimit-used')
-        print(response.headers.get('x-ratelimit-reset'))
-        rate_limit_reset_time = datetime.fromtimestamp(int(response.headers.get('x-ratelimit-reset')), tz=UTC).astimezone(ZoneInfo("Pacific/Auckland"))
-        rate_limit_resource = response.headers.get('x-ratelimit-resource')
+        try:
+            max_requests = response.headers.get('x-ratelimit-limit')
+            remaining_requests = response.headers.get('x-ratelimit-remaining')
+            total_used_requests = response.headers.get('x-ratelimit-used')
+            rate_limit_resource = response.headers.get('x-ratelimit-resource')
+            reset_raw = response.headers.get("X-RateLimit-Reset")
 
-        message = (
-            f"GitHub rate limit ({rate_limit_resource}): "
-            f"{remaining_requests}/{max_requests} requests remaining "
-            f"({total_used_requests} used). "
-            f"Resets at {rate_limit_reset_time.isoformat()}."
-        )
-        log.info(message)
+            if reset_raw is None:
+                raise ValueError("Missing GitHub 'X-RateLimit-Reset' header")
+            rate_limit_reset_time = datetime.fromtimestamp(int(reset_raw), tz=UTC).astimezone(ZoneInfo("Pacific/Auckland"))
+
+            message = (
+                f"GitHub rate limit ({rate_limit_resource}): "
+                f"{remaining_requests}/{max_requests} requests remaining "
+                f"({total_used_requests} used). "
+                f"Resets at {rate_limit_reset_time.isoformat()}."
+            )
+            log.info(message)
+        except Exception as e:
+            log.warning(f"Failed to log rate limit information: {e}")
 
     result = response.json() if sha else response.json()[0]
 
-    return {
+    commit_info: CommitInfo = {
         'sha': result.get('sha'),
         'commit_datetime': _parse_to_utc(result['commit']['author'].get('date')).isoformat(),
         'request_datetime': request_time.isoformat(),
         'author': result['commit']['author'].get('name'),
         'message': result['commit'].get('message'),
     }
+
+    return commit_info
 
 
 def get_github_url(owner: str, repo: str, sha: str) -> str:
