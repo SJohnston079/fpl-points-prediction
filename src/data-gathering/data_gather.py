@@ -5,7 +5,6 @@ from pathlib import Path
 src_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(src_root))
 from utils.config.functions import read_config
-from utils.config.functions import ZipfileOutputManager
 from utils.config.config_schemas import DataSourceMetaDataConfig
 from utils.constants import SOURCES_CONFIG_DIR, SOURCE_METADATA_CONFIG_NAME
 

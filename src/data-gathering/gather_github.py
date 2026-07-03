@@ -4,7 +4,7 @@ import sys
 import io
 import zipfile
 import requests
-from typing import Optional, Union
+from typing import Optional
 from datetime import datetime, UTC
 from dateutil import parser as dtparser
 from zoneinfo import ZoneInfo
@@ -186,7 +186,7 @@ def gather_github_directory(config: DataSourceMetaDataConfig, sha: Optional[str]
     ZipfileOutputManager(
         zip_file=github_zip, 
         output_path=output_dir_path, 
-        archive_prefix=PurePosixPath(f"{config.source.repo}-{commit_info.get('sha')}"), 
+        archive_prefix=PurePosixPath(f"{config.source.repo}-{commit_info.get('sha')}/data"), 
         source_config=config,
         source_metadata=commit_info
     ).execute()
