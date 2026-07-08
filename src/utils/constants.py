@@ -9,6 +9,7 @@ SOURCE_SCHEMA_CONFIG_NAME = "schema.yml"
 
 CONFIG_ROOT = Path("config")
 SOURCES_CONFIG_DIR = CONFIG_ROOT / "sources"
+INGESTION_CONFIG_DIR = CONFIG_ROOT / "ingestion"
 
 
 # DATA

@@ -1,25 +1,25 @@
-header: 
-  filenames: 
-    - "players"
-    - "playerstats"
-    - "teams"
-    - "matches"
-    - "playermatchstats"
+filenames: 
+  - "players"
+  - "playerstats"
+  - "teams"
+  - "matches"
+  - "playermatchstats"
 
-  temporal_granularity: 
-    - "static"
-    - "season"
-    - "gameweek"
+temporal_granularity: 
+  - "static"
+  - "season"
+  - "gameweek"
 
-  filepath_structure: # expressed in jinja template format
-    structure_0: >- # 2024-2025
-      raw_data/{{ season }}/{{ filename }}/
-      {% if temporal_granularity == 'gameweek' %}{{ gw }}/{% endif %}
-      {{ filename }}.csv
-    structure_1: >- # 2025-2026
-      raw_data/{{ season }}/
-      {% if temporal_granularity == 'gameweek' %}{{ By Gameweek }}/{{ gw }}/{% endif %}
-      {{ filename }}.csv
+filepath_jinja: # expressed in jinja template format
+  structure_0: >- # 2024-2025
+    fpl-core-insights/{{ season }}/{{ filename }}/{% if temporal_granularity == 'gameweek' %}GW{{ gw }}/{% endif %}{{ filename }}.csv
+    
+  structure_1: >- # 2025-2026
+    fpl-core-insights/{{ season }}/{% if temporal_granularity == 'gameweek' %}By Gameweek/GW{{ gw }}/{% endif %}{{ filename }}.csv
+
+season_filepath_jinja_map: # seasons in structure "YYYY-YYYY"
+  2024-2025: "structure_0"
+  2025-2026: "structure_1"
 
 players:
   input:
