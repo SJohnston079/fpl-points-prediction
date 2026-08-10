@@ -43,7 +43,6 @@ class FplCoreInsightsIngestionConfig(BaseModel):
     #temporal_granularity: Literal['gameweek', 'season']
     filepath_jinja: dict[str, Annotated[str, AfterValidator(validate_jinja_syntax)]] # expressed in jinja template format
     season_filepath_jinja_map: dict[str, str]
-    structure: Optional[dict]
 
     @model_validator(mode="after")
     def check_structure_refs(self) -> "FplCoreInsightsIngestionConfig":

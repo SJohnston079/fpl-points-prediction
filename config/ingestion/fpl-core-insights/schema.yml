@@ -1,7 +1,7 @@
 filenames: 
+  - "teams"
   - "players"
   - "playerstats"
-  - "teams"
   - "matches"
   - "playermatchstats"
 
@@ -12,86 +12,11 @@ temporal_granularity:
 
 filepath_jinja: # expressed in jinja template format
   structure_0: >- # 2024-2025
-    fpl-core-insights/{{ season }}/{{ filename }}/{% if temporal_granularity == 'gameweek' %}GW{{ gw }}/{% endif %}{{ filename }}.csv
+    fpl-core-insights/{{ season }}/{{ filename }}/{% if temporal_granularity == 'gameweek' %}GW{{ gameweek }}/{% endif %}{{ filename }}.csv
     
   structure_1: >- # 2025-2026
-    fpl-core-insights/{{ season }}/{% if temporal_granularity == 'gameweek' %}By Gameweek/GW{{ gw }}/{% endif %}{{ filename }}.csv
+    fpl-core-insights/{{ season }}/{% if temporal_granularity == 'gameweek' %}By Gameweek/GW{{ gameweek }}/{% endif %}{{ filename }}.csv
 
 season_filepath_jinja_map: # seasons in structure "YYYY-YYYY"
   2024-2025: "structure_0"
   2025-2026: "structure_1"
-
-players:
-  input:
-    2024-2025:
-      season:
-        filepath: "players/players.csv"
-        columns:
-          - "player_code"
-          - "player_id"
-          - "first_name"
-          - "second_name"
-          - "web_name"
-          - "team_code"
-          - "position"
-    2025-2026:
-      gameweek:
-        filepath: "By Gameweek/GW{n}/players.csv"
-        columns:
-          - "player_code"
-          - "player_id"
-          - "first_name"
-          - "second_name"
-          - "web_name"
-          - "team_code"
-          - "position"
-  output:
-    filename: "players"
-    static:
-      key: ['player_code', 'player_id']
-      columns: ['player_code', 'player_id']
-    season:
-      key: ['player_code', 'season']
-      columns:
-        - "player_code"
-        - "player_id"
-        - "first_name"
-        - "second_name"
-        - "web_name"
-        - "position"
-    gameweek:
-      key: ['player_code', 'season', 'gameweek']
-      columns:
-        - "player_code"
-        - "player_id"
-        - "first_name"
-        - "second_name"
-        - "web_name"
-        - "position"
-        - "team_code"
-
-
-structure:
-  2024-2025:
-    season_files:
-      players: "players/players.csv"
-      playerstats: "playerstats/playerstats.csv"
-      teams: "teams/teams.csv"
-    gw_files:
-      matches: "matches/GW{n}/matches.csv"
-      playermatchstats: "playermatchstats/GW{n}/playermatchstats.csv"
-
-  2025-2026:
-    season_files:
-      gameweek_summaries: "gameweek_summaries.csv"
-      players: "players.csv"
-      playerstats: "playerstats.csv"
-      teams: "teams.csv"
-    gw_files:
-      players: "By Gameweek/GW{n}/players.csv"
-      teams: "By Gameweek/GW{n}/teams.csv"
-      playerstats: "By Gameweek/GW{n}/playerstats.csv"
-      matches: "By Gameweek/GW{n}/matches.csv"
-      playermatchstats: "By Gameweek/GW{n}/playermatchstats.csv"
-    excluded:
-      by_tournament: "redundant — revisit if non-PL competition needed"
